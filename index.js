@@ -26,9 +26,12 @@ function createArea(map) {
         }
     })
 
+    // createTunnel(tunnelW, 40)
+    // createTunnel(tunnelH, 24)
     createRoom(countRoom)
     createTunnel(tunnelW, tunnelH)
-    addSwordPotion()
+
+    addAll()
 }
 
 function createRoom(count) { // генерация комнат 
@@ -46,43 +49,174 @@ function createRoom(count) { // генерация комнат
     }
 } 
 
-function createTunnel(countW, countH) { // генерация туннелей
-    for(let i = 0; i < countW; i++) { // туннели по вертикали
-        let randomY = Math.floor(Math.random() * 40)
+function createTunnel(verticalCount, horizontalCount) {
+    let vertical = verticalCount
+    while(vertical > 0) {
+        let randomY = randomNum(40)
+        if(area[randomY][randomNum(24)].className === 'tile') continue
+        else vertical--
         for(let j = 0; j < area[0].length; j++) {
             area[randomY][j].className = 'tile'
         }
-        
     }
 
-    for(let i = 0; i < countH; i++) { // туннели по горризонтали
-        let randomX = Math.floor(Math.random() * 24)
+    let horizontal = horizontalCount
+    while(horizontal > 0) {
+        let randomX = randomNum(24)
+        if(area[randomNum(40)][randomX].className === 'tile') continue 
+        else horizontal--
         for(let j = 0; j < area.length; j++) {
-            area[j][randomX].className = 'tile'
+          area[j][randomX].className = 'tile'
         }
     }
 }
 
-function addSwordPotion() { // генерация мечей и делей
+function addAll() { // генерация предметов и юнитов
     for(let i = 0; i < 2; i++) {
-        additem(true)
-    }
-    for(let i = 0; i < 10; i++) {
-        additem(false)
+        additem('sword')
     }
 
-    function additem(bool) {
-        for(;;) {
-            let randomX = Math.floor(Math.random() * 24)
-            let randomY = Math.floor(Math.random() * 40)
-            if(area[randomY][randomX].className === 'tile') {
-                console.log(area[randomY][randomX])
-                bool ? area[randomY][randomX].className = 'tile tileSW' : area[randomY][randomX].className = 'tile tileHP'
-                break
-            }
-        }
-        
+    additem('hero')
+
+    for(let i = 0; i < 10; i++) {
+        additem('potion')
+        additem('enemy')
     }
 }
 
+function additem(item) { // функция создания предметов и юнитов 
+    for(;;) {
+        let randomX = randomNum(40)
+        let randomY = randomNum(24)
+        if(area[randomX][randomY].className === 'tile') {
+            switch(item) {
+                case 'sword': 
+                    area[randomX][randomY].className = 'tile tileSW'
+                    break
+
+                case 'potion': 
+                    area[randomX][randomY].className = 'tile tileHP'
+                    break
+
+                case 'hero': 
+                    const health = document.createElement('div')
+                    health.className='health'
+                    health.style.width = '100%'  
+                    area[randomX][randomY].className = 'tile tileP'
+                    area[randomX][randomY].append(health)
+                    area[randomX][randomY].dataset.x = randomX
+                    area[randomX][randomY].dataset.y = randomY
+                    area[randomX][randomY].dataset.health = 100
+                    area[randomX][randomY].dataset.damade = 25
+                    break    
+
+                case 'enemy': 
+                    const healthEnemy = document.createElement('div')
+                    healthEnemy.className='health'
+                    healthEnemy.style.width = '100%'
+                    area[randomX][randomY].className = 'tile tileE'
+                    area[randomX][randomY].append(healthEnemy)
+                    area[randomX][randomY].dataset.health = 100
+                    area[randomX][randomY].dataset.damade = 20
+                    break
+                default: 
+                    break
+            }
+            break
+        }
+    }
+    
+}
+
+function randomNum(num) {
+    return Math.floor(Math.random() * num)
+}
 createArea(area)
+
+function movement(letter) {
+    let hero = document.querySelector('.tileP')
+    let health = hero.querySelector('.health')
+    switch(letter) {
+        case 'w':
+        case 'ц':
+            // if(hero.dataset.y - 1 >= 0 && area[hero.dataset.x][hero.dataset.y - 1].className === 'tile tileSW') {
+            //     area[hero.dataset.x][hero.dataset.y - 1].className = 'tile'
+            //     area[hero.dataset.x][hero.dataset.y - 1].damade = hero.dataset.damade + 50
+            // }
+            if(hero.dataset.y - 1 >= 0 && area[hero.dataset.x][hero.dataset.y - 1].className === 'tile') { // Проверка на границу и стены
+                // debugger
+                hero.className = 'tile'
+                health.remove() // удаление полоски здоровья
+                
+                
+                hero.dataset.y = Number(hero.dataset.y) - 1 
+                area[hero.dataset.x][hero.dataset.y].className = 'tile tileP'
+                area[hero.dataset.x][hero.dataset.y].append(health) // добавление полоски здоровья
+                area[hero.dataset.x][hero.dataset.y].dataset.x = hero.dataset.x
+                area[hero.dataset.x][hero.dataset.y].dataset.y = hero.dataset.y
+                area[hero.dataset.x][hero.dataset.y].dataset.health = hero.dataset.health
+                area[hero.dataset.x][hero.dataset.y].dataset.damade = hero.dataset.damade
+                
+            }
+            break
+
+        case 'a':
+        case 'ф':
+            if(Number(hero.dataset.x) - 1 >= 0 && area[Number(hero.dataset.x) - 1][hero.dataset.y].className === 'tile') {// Проверка на границу и стены
+                hero.className = 'tile'
+                health.remove()
+                hero.dataset.x = Number(hero.dataset.x) - 1
+                area[hero.dataset.x][hero.dataset.y].className = 'tile tileP'
+                area[hero.dataset.x][hero.dataset.y].append(health)
+                area[hero.dataset.x][hero.dataset.y].dataset.x = hero.dataset.x
+                area[hero.dataset.x][hero.dataset.y].dataset.y = hero.dataset.y
+                area[hero.dataset.x][hero.dataset.y].dataset.health = 100
+            }
+            break
+            break
+
+        case 'd':
+        case 'в':
+            if(Number(hero.dataset.x) + 1 < 40 && area[Number(hero.dataset.x) + 1][hero.dataset.y].className === 'tile') {// Проверка на границу и стены
+                hero.className = 'tile'
+                health.remove()
+                hero.dataset.x = Number(hero.dataset.x) + 1
+                area[hero.dataset.x][hero.dataset.y].className = 'tile tileP'
+                area[hero.dataset.x][hero.dataset.y].append(health)
+                area[hero.dataset.x][hero.dataset.y].dataset.x = hero.dataset.x
+                area[hero.dataset.x][hero.dataset.y].dataset.y = hero.dataset.y
+                area[hero.dataset.x][hero.dataset.y].dataset.health = 100
+            }
+            break
+
+        case 's':
+        case 'ы':
+            if(Number(hero.dataset.y) + 1 < 24 && area[hero.dataset.x][Number(hero.dataset.y) + 1].className === 'tile') {// Проверка на границу и стены
+                hero.className = 'tile'
+                health.remove()
+                hero.dataset.y = Number(hero.dataset.y) + 1
+                area[hero.dataset.x][hero.dataset.y].className = 'tile tileP'
+                area[hero.dataset.x][hero.dataset.y].append(health)
+                area[hero.dataset.x][hero.dataset.y].dataset.x = hero.dataset.x
+                area[hero.dataset.x][hero.dataset.y].dataset.y = hero.dataset.y
+                area[hero.dataset.x][hero.dataset.y].dataset.health = 100
+            }
+            break
+
+        case ' ':
+            for(let i = 0; i < 3; i++) {
+                for(let j = 0; j < 3; j++) {
+                    if(area[Number(hero.dataset.x) - 1 + j][Number(hero.dataset.y) - 1 + i].className === 'tile tileE') {
+                        area[Number(hero.dataset.x) - 1 + j][Number(hero.dataset.y) - 1 + i].className = 'tile'       
+                    }
+                }
+            }
+        break
+
+        default: 
+            break
+    }
+}
+
+document.addEventListener('keyup', (event) => movement(event.key.toLowerCase()))
+
