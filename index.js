@@ -1,16 +1,13 @@
-// var game=new Game();
-// game.init();
 const widthArea = 40
 const heightArea = 24
-
-const element = document.querySelector('.field') // Игровое поле
+const field = document.querySelector('.field') // Игровое поле
 
 const area = new Array(widthArea)
 for(let i = 0; i < area.length; i++) {
     area[i] = new Array(heightArea)
 }
 
-function createArea(map) {
+function createArea(map) { // функция создания карты
     const countRoom = randomNum(11, 5) // сколько комнат
     const tunnelW = randomNum(6, 3) // сколько туннелей по горризонтали
     const tunnelH = randomNum(6, 3) // сколько туннелей по вертикале
@@ -22,16 +19,13 @@ function createArea(map) {
             tile.style.top = `${30 * indexH}px`
             tile.className = 'tile tileW'
             area[indexW][indexH] = tile
-            element.append(tile)
+            field.append(tile)
         }
     })
 
-    // createTunnel(tunnelW, 40)
-    // createTunnel(tunnelH, 24)
     createRoom(countRoom)
     createTunnel(tunnelW, tunnelH)
-
-    addAll()
+    addAllItems()
 }
 
 function createRoom(count) { // генерация комнат 
@@ -49,7 +43,7 @@ function createRoom(count) { // генерация комнат
     }
 } 
 
-function createTunnel(verticalCount, horizontalCount) {
+function createTunnel(verticalCount, horizontalCount) { // генерация туннелей
     let vertical = verticalCount
     while(vertical > 0) {
         let randomY = randomNum(40)
@@ -71,7 +65,7 @@ function createTunnel(verticalCount, horizontalCount) {
     }
 }
 
-function addAll() { // генерация предметов и юнитов
+function addAllItems() { // генерация предметов и юнитов
     for(let i = 0; i < 2; i++) {
         additem('sword')
     }
@@ -82,6 +76,19 @@ function addAll() { // генерация предметов и юнитов
         additem('potion')
         additem('enemy')
     }
+}
+
+function createUnit(heroName, healthHero, damage, x, y) { // функция создания юнитов
+    const health = document.createElement('div')
+    health.className='health'
+    health.style.width = '100%'  
+    area[x][y].className = heroName
+    area[x][y].append(health)
+    area[x][y].dataset.x = x
+    area[x][y].dataset.y = y
+    area[x][y].dataset.health = healthHero
+    area[x][y].dataset.damage = damage
+
 }
 
 function additem(item) { // функция создания предметов и юнитов 
@@ -99,29 +106,11 @@ function additem(item) { // функция создания предметов �
                     break
 
                 case 'hero': 
-                    const health = document.createElement('div')
-                    health.className='health'
-                    health.style.width = '100%'  
-                    area[randomX][randomY].className = 'tile tileP'
-                    area[randomX][randomY].append(health)
-                    area[randomX][randomY].dataset.x = randomX
-                    area[randomX][randomY].dataset.y = randomY
-                    area[randomX][randomY].dataset.health = 100
-                    area[randomX][randomY].dataset.damage = 25
+                    createUnit('tile tileP', 100, 25, randomX, randomY)
                     break    
 
                 case 'enemy': 
-                    const healthEnemy = document.createElement('div')
-                    healthEnemy.className='health'
-                    healthEnemy.style.width = '100%'
-                    area[randomX][randomY].className = 'tile tileE'
-                    area[randomX][randomY].append(healthEnemy)
-                    area[randomX][randomY].dataset.x = randomX
-                    area[randomX][randomY].dataset.y = randomY
-                    area[randomX][randomY].dataset.health = 100
-                    area[randomX][randomY].dataset.damage = 20
-                    break
-                default: 
+                    createUnit('tile tileE', 100, 20, randomX, randomY)
                     break
             }
             break
@@ -130,11 +119,11 @@ function additem(item) { // функция создания предметов �
     
 }
 
-function randomNum(max, min = 0) { 
+function randomNum(max, min = 0) { // функция случайного числа
     return Math.floor(Math.random() * (max - min) + min)
 }
 
-function movement(letter) { // функция, отвечает за передвижение героя
+function gameplay(button) { // функция, отвечает за передвижение героя
     let hero = document.querySelector('.tileP')
     let health = hero.querySelector('.health')
     let inventory = document.querySelector('.inventory')
@@ -143,10 +132,29 @@ function movement(letter) { // функция, отвечает за перед�
         return area[Number(hero.dataset.x) + x][Number(hero.dataset.y) + y]
     }
 
-    function movementEnemy() { // функция атаки и передвиженеи героя
-        const allEnemy = element.querySelectorAll('.tileE')
-        allEnemy.forEach((enemy, index) => {
+    function gameplayEnemy() { // функция атаки и передвиженеи героя
+        const allEnemy = field.querySelectorAll('.tileE')
+
+        allEnemy.forEach((enemy) => {
             let kick = false // флаг на удар по персонажу
+
+            function oneZoneForEnemy(x = 0, y = 0) {
+                return area[Number(enemy.dataset.x) + x][Number(enemy.dataset.y) + y]
+            }
+
+            function movementEnemy() {
+                enemy.className = 'tile'
+                enemy.querySelector('.health').remove() // удаление полоски здоровья
+                oneZoneForEnemy().className = 'tile tileE'
+                let enemyHealth = document.createElement('div')
+                enemyHealth.className = 'health'
+                enemyHealth.style.width = `${enemy.dataset.health}%` 
+                oneZoneForEnemy().append(enemyHealth) // добавление полоски здоровья
+                oneZoneForEnemy().dataset.x = enemy.dataset.x
+                oneZoneForEnemy().dataset.y = enemy.dataset.y
+                oneZoneForEnemy().dataset.health = enemy.dataset.health
+                oneZoneForEnemy().dataset.damage = enemy.dataset.damage
+            }
 
             for(let i = 0; i < 3; i++) {
                 for(let j = 0; j < 3; j++) {
@@ -155,7 +163,7 @@ function movement(letter) { // функция, отвечает за перед�
                         cuHero.dataset.health -= enemy.dataset.damage // наносим урон по герою
                         cuHero.querySelector('.health').style.width = `${cuHero.dataset.health}%` // меняем полоску здоровья
                         kick = true // удар был
-                        if(cuHero.dataset.health <= 0) {
+                        if(cuHero.dataset.health <= 0) { // если у героя не остается хп
                             cuHero.querySelector('.health').remove()
                             cuHero.className = 'tile' 
                             location.reload() // перезапускаем страничку после поражения 
@@ -166,72 +174,30 @@ function movement(letter) { // функция, отвечает за перед�
             if(!kick) { // если удар был => не передвигается
                 switch(randomNum(4).toString()) { // случайное число указывающее в какое направление случайно двигаться
                     case '0': // вверх
-                        if(enemy.dataset.y - 1 >= 0 && area[enemy.dataset.x][Number(enemy.dataset.y) - 1].className === 'tile') {
-                            enemy.className = 'tile'
-                            enemy.querySelector('.health').remove() // удаление полоски здоровья
+                        if(Number(enemy.dataset.y) - 1 >= 0 && oneZoneForEnemy(0, -1).className === 'tile') {
                             enemy.dataset.y = Number(enemy.dataset.y) - 1 
-                            area[enemy.dataset.x][enemy.dataset.y].className = 'tile tileE'
-                            let enemyHealth = document.createElement('div')
-                            enemyHealth.className = 'health'
-                            enemyHealth.style.width = `${enemy.dataset.health}%` 
-                            area[enemy.dataset.x][enemy.dataset.y].append(enemyHealth) // добавление полоски здоровья
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.x = enemy.dataset.x
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.y = enemy.dataset.y
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.health = enemy.dataset.health
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.damage = enemy.dataset.damage
-                            
+                            movementEnemy()                            
                         }
                         break
 
                     case '1': // направо
-                        if(Number(enemy.dataset.x) + 1 < 40 && area[Number(enemy.dataset.x) + 1][enemy.dataset.y].className === 'tile') {
-                            enemy.className = 'tile'
-                            enemy.querySelector('.health').remove() // удаление полоски здоровья
+                        if(Number(enemy.dataset.x) + 1 < 40 && oneZoneForEnemy(1, 0).className === 'tile') {
                             enemy.dataset.x = Number(enemy.dataset.x) + 1 
-                            area[enemy.dataset.x][enemy.dataset.y].className = 'tile tileE'
-                            let enemyHealth = document.createElement('div')
-                            enemyHealth.className = 'health'
-                            enemyHealth.style.width = `${enemy.dataset.health}%` 
-                            area[enemy.dataset.x][enemy.dataset.y].append(enemyHealth) // добавление полоски здоровья
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.x = enemy.dataset.x
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.y = enemy.dataset.y
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.health = enemy.dataset.health
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.damage = enemy.dataset.damage
-                            
+                            movementEnemy()
                         }
                         break
 
                     case '2': // вниз
-                        if(Number(enemy.dataset.y) + 1 < 24 && area[enemy.dataset.x][Number(enemy.dataset.y) + 1].className === 'tile') {
-                            enemy.className = 'tile'
-                            enemy.querySelector('.health').remove() // удаление полоски здоровья
+                        if(Number(enemy.dataset.y) + 1 < 24 && oneZoneForEnemy(0, 1).className === 'tile') {
                             enemy.dataset.y = Number(enemy.dataset.y) + 1 
-                            area[enemy.dataset.x][enemy.dataset.y].className = 'tile tileE'
-                            let enemyHealth = document.createElement('div')
-                            enemyHealth.className = 'health'
-                            enemyHealth.style.width = `${enemy.dataset.health}%` 
-                            area[enemy.dataset.x][enemy.dataset.y].append(enemyHealth) // добавление полоски здоровья
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.x = enemy.dataset.x
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.y = enemy.dataset.y
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.health = enemy.dataset.health
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.damage = enemy.dataset.damage
+                            movementEnemy()
                         }
                         break
 
                     case '3': // налево
-                        if(enemy.dataset.x - 1 >= 0 && area[Number(enemy.dataset.x) - 1][enemy.dataset.y].className === 'tile') {
-                            enemy.className = 'tile'
-                            enemy.querySelector('.health').remove() // удаление полоски здоровья
+                        if(enemy.dataset.x - 1 >= 0 && oneZoneForEnemy(-1, 0).className === 'tile') {
                             enemy.dataset.x = Number(enemy.dataset.x) - 1 
-                            area[enemy.dataset.x][enemy.dataset.y].className = 'tile tileE'
-                            let enemyHealth = document.createElement('div')
-                            enemyHealth.className = 'health'
-                            enemyHealth.style.width = `${enemy.dataset.health}%` 
-                            area[enemy.dataset.x][enemy.dataset.y].append(enemyHealth) // добавление полоски здоровья
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.x = enemy.dataset.x
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.y = enemy.dataset.y
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.health = enemy.dataset.health
-                            area[enemy.dataset.x][enemy.dataset.y].dataset.damage = enemy.dataset.damage
+                            movementEnemy()
                         }
                         break
                 }
@@ -240,131 +206,109 @@ function movement(letter) { // функция, отвечает за перед�
         
     }
 
-    switch(letter) {
+    function getPotion() {
+        hero.dataset.health = 100 // восполняем здоровье героя 
+        hero.querySelector('.health').style.width = `${hero.dataset.health}%`
+    }
+
+    function getSword() {
+        hero.dataset.damage *= 2 // увеличиваем урон героя в два раза
+        const sword = document.createElement('div') // создаем меч
+        sword.className = 'tileSW'
+        inventory.append(sword) // добавляем меч в инвентарь
+    }
+
+    function movementHero() {
+        hero.className = 'tile'
+        health.remove() // удаление полоски здоровья
+        oneZone().className = 'tile tileP'
+        oneZone().append(health) // добавление полоски здоровья
+        oneZone().dataset.x = hero.dataset.x
+        oneZone().dataset.y = hero.dataset.y
+        oneZone().dataset.health = hero.dataset.health
+        oneZone().dataset.damage = hero.dataset.damage 
+    }
+
+    switch(button) {
         case 'w':
         case 'ц':
-            if(hero.dataset.y - 1 >= 0 && oneZone(0, -1).className === 'tile tileHP') { // если наступил на зелье
-                oneZone(0, -1).className = 'tile'
-                hero.dataset.health = 100 // восполняем здоровье героя 
-                hero.querySelector('.health').style.width = `${hero.dataset.health}%`
+            if(Number(hero.dataset.y) - 1 >= 0 && oneZone(0, -1).className === 'tile tileHP') { // если наступил на зелье
+                oneZone(0, -1).className = 'tile' // Убираем зелье с карты
+                getPotion()
             }
 
-            if(hero.dataset.y - 1 >= 0 && oneZone(0, -1).className === 'tile tileSW') { // если наступил на меч
-                oneZone(0, -1).className = 'tile'
-                hero.dataset.damage *= 2 // увеличиваем урон героя в два раза
-                const sword = document.createElement('div') // создаем меч
-                sword.className = 'tileSW'
-                inventory.append(sword) // добавляем меч в инвентарь
+            if(Number(hero.dataset.y) - 1 >= 0 && oneZone(0, -1).className === 'tile tileSW') { // если наступил на меч
+                oneZone(0, -1).className = 'tile' // убираем меч с карты
+                getSword()
             }
 
-            if(hero.dataset.y - 1 >= 0 && area[hero.dataset.x][Number(hero.dataset.y) - 1].className === 'tile') { // Проверка на границу и стены
-                hero.className = 'tile'
-                health.remove() // удаление полоски здоровья
+            if(Number(hero.dataset.y) - 1 >= 0 && oneZone(0, -1).className === 'tile') { // Проверка на границу и стены
                 hero.dataset.y = Number(hero.dataset.y) - 1 
-                oneZone().className = 'tile tileP'
-                oneZone().append(health) // добавление полоски здоровья
-                oneZone().dataset.x = hero.dataset.x
-                oneZone().dataset.y = hero.dataset.y
-                oneZone().dataset.health = hero.dataset.health
-                oneZone().dataset.damage = hero.dataset.damage        
+                movementHero()    
             }
-            movementEnemy()
+            gameplayEnemy()
             break
 
         case 'a':
         case 'ф':
-            if(hero.dataset.x - 1 >= 0 && oneZone(-1, 0).className === 'tile tileHP') { // если наступил на зелье
-                oneZone(-1, 0).className = 'tile'
-                hero.dataset.health = 100 // восполняем здоровье героя 
-                hero.querySelector('.health').style.width = `${hero.dataset.health}%`
+            if(Number(hero.dataset.x) - 1 >= 0 && oneZone(-1, 0).className === 'tile tileHP') { // если наступил на зелье
+                oneZone(-1, 0).className = 'tile' // Убираем зелье с карты
+                getPotion()
             }
 
-            if(hero.dataset.x - 1 >= 0 && oneZone(-1, 0).className === 'tile tileSW') { // если наступил на меч
+            if(Number(hero.dataset.x) - 1 >= 0 && oneZone(-1, 0).className === 'tile tileSW') { // если наступил на меч
                 oneZone(-1, 0).className = 'tile' // убираем меч с карты
-                hero.dataset.damage *= 2 // увеличиваем урон героя в два раза
-                const sword = document.createElement('div') // создаем меч
-                sword.className = 'tileSW'
-                inventory.append(sword) // добавляем меч в инвентарь
+                getSword()
             }
 
-            if(Number(hero.dataset.x) - 1 >= 0 && area[Number(hero.dataset.x) - 1][hero.dataset.y].className === 'tile') {// Проверка на границу и стены
-                hero.className = 'tile'
-                health.remove()
+            if(Number(hero.dataset.x) - 1 >= 0 && oneZone(-1, 0).className === 'tile') {// Проверка на границу и стены
                 hero.dataset.x = Number(hero.dataset.x) - 1
-                oneZone().className = 'tile tileP'
-                oneZone().append(health)
-                oneZone().dataset.x = hero.dataset.x
-                oneZone().dataset.y = hero.dataset.y
-                oneZone().dataset.health = hero.dataset.health
-                oneZone().dataset.damage = hero.dataset.damage
+                movementHero()
             }
-            movementEnemy()
+            gameplayEnemy()
             break
 
         case 'd':
         case 'в':
             if(Number(hero.dataset.x) + 1 < 40 && oneZone(1, 0).className === 'tile tileHP') { // если наступил на зелье
-                oneZone(1, 0).className = 'tile'
-                hero.dataset.health = 100 // восполняем здоровье героя 
-                hero.querySelector('.health').style.width = `${hero.dataset.health}%`
+                oneZone(1, 0).className = 'tile' // Убираем зелье с карты
+                getPotion()
             }
 
             if(Number(hero.dataset.x) + 1 < 40 && oneZone(1, 0).className === 'tile tileSW') { // если наступил на меч
                 oneZone(1, 0).className = 'tile' // убираем меч с карты
-                hero.dataset.damage *= 2 // увеличиваем урон героя в два раза
-                const sword = document.createElement('div') // создаем меч
-                sword.className = 'tileSW'
-                inventory.append(sword) // добавляем меч в инвентарь
+                getSword()
             }
 
             if(Number(hero.dataset.x) + 1 < 40 && oneZone(1, 0).className === 'tile') {// Проверка на границу и стены
-                hero.className = 'tile'
-                health.remove()
                 hero.dataset.x = Number(hero.dataset.x) + 1
-                oneZone().className = 'tile tileP'
-                oneZone().append(health)
-                oneZone().dataset.x = hero.dataset.x
-                oneZone().dataset.y = hero.dataset.y
-                oneZone().dataset.health = hero.dataset.health
-                oneZone().dataset.damage = hero.dataset.damage
+                movementHero()
             }
-            movementEnemy()
+            gameplayEnemy()
             break
 
         case 's':
         case 'ы':
             if(Number(hero.dataset.y) + 1 < 24 && oneZone(0, 1).className === 'tile tileHP') { // если наступил на зелье
-                oneZone(0, 1).className = 'tile'
-                hero.dataset.health = 100 // восполняем здоровье героя 
-                hero.querySelector('.health').style.width = `${hero.dataset.health}%`
+                oneZone(0, 1).className = 'tile' // Убираем зелье с карты
+                getPotion()
             }
 
             if(Number(hero.dataset.y) + 1 < 24 && oneZone(0, 1).className === 'tile tileSW') { // если наступил на меч
                 oneZone(0, 1).className = 'tile' // убираем меч с карты
-                hero.dataset.damage *= 2 // увеличиваем урон героя в два раза
-                const sword = document.createElement('div') // создаем меч
-                sword.className = 'tileSW'
-                inventory.append(sword) // добавляем меч в инвентарь
+                getSword()
             }
 
             if(Number(hero.dataset.y) + 1 < 24 && oneZone(0, 1).className === 'tile') {// Проверка на границу и стены
-                hero.className = 'tile'
-                health.remove()
                 hero.dataset.y = Number(hero.dataset.y) + 1
-                oneZone().className = 'tile tileP'
-                oneZone().append(health)
-                oneZone().dataset.x = hero.dataset.x
-                oneZone().dataset.y = hero.dataset.y
-                oneZone().dataset.health = hero.dataset.health
-                oneZone().dataset.damage = hero.dataset.damage
+                movementHero()
             }
-            movementEnemy()
+            gameplayEnemy()
             break
 
         case ' ': // Атака на пробел
             for(let i = 0; i < 3; i++) {
                 for(let j = 0; j < 3; j++) {
-                    console.log()
                     if((Number(hero.dataset.x) - 1 + i >= 0 && Number(hero.dataset.x) - 1 + i < 40) && (Number(hero.dataset.y) - 1 + j >= 0 && Number(hero.dataset.y) - 1 + j < 24) && area[Number(hero.dataset.x) - 1 + i][Number(hero.dataset.y) - 1 + j].className === 'tile tileE') { // поиск врага вокруг себя
                         const enemy = area[Number(hero.dataset.x) - 1 + i][Number(hero.dataset.y) - 1 + j] 
 
@@ -378,15 +322,11 @@ function movement(letter) { // функция, отвечает за перед�
                     }
                 }
             }
-
-            movementEnemy()
+            gameplayEnemy()
             break
-
-        // default: 
-        //     break
     }
 }
 
 createArea(area)
-document.addEventListener('keyup', (event) => movement(event.key.toLowerCase()))
+document.addEventListener('keyup', (event) => gameplay(event.key.toLowerCase())) // удалять слушатель не надо, так как игра перезапускается сама
 
